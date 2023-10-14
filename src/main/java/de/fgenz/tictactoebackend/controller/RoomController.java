@@ -22,6 +22,7 @@ public class RoomController {
 
     @GetMapping("/rooms")
     public List<Room> getAllRooms(HttpServletRequest request) {
+        System.out.println("all rooms were requested");
         if (roomList.size() == 0) {
             roomList.add(new Room(1));
         }
