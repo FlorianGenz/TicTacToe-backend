@@ -1,6 +1,7 @@
 package de.fgenz.tictactoebackend.controller;
 
 import de.fgenz.tictactoebackend.model.Room;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,20 +10,25 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/backend/room/")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8888", "https://tictactoefg.netlify.app"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080", "https://tictactoefg.netlify.app"})
 public class RoomController {
     private final List<Room> roomList;
+    private final List<String> loggedInIps;
 
-    public RoomController(List<Room> roomList) {
+    public RoomController(List<Room> roomList, List<String> loggedInIps) {
         this.roomList = roomList;
+        this.loggedInIps = loggedInIps;
     }
 
     @GetMapping("/rooms")
-    public List<Room> getAllRooms() {
+    public List<Room> getAllRooms(HttpServletRequest request) {
         if (roomList.size() == 0) {
             roomList.add(new Room(1));
         }
-        return roomList;
+        if (loggedInIps.contains(request.getRemoteAddr())){
+            return roomList;
+        }
+        return null;
     }
 
     @GetMapping("/{roomId}/getRoom")
@@ -102,6 +108,19 @@ public class RoomController {
             return new ResponseEntity<>(name, HttpStatus.OK);
         }
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+    }
+
+    @PostMapping("/adminPanel/login")
+    public ResponseEntity<Boolean> adminPanelLogIn(@RequestBody String[] usernamePassword, HttpServletRequest request){
+        int usernameHash = usernamePassword[0].hashCode();
+        int passwordHash = usernamePassword[1].hashCode();
+        if(usernameHash == 92668751 && passwordHash == -737121861){
+            System.out.println(request.getRemoteAddr() + " logged in");
+            loggedInIps.add(request.getRemoteAddr());
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        }
+        System.out.println(request.getRemoteAddr() + " tried to log in");
+        return new ResponseEntity<>(false, HttpStatus.OK);
     }
 
     public Room getRoomById(long id) {
